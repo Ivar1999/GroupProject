@@ -27,7 +27,10 @@ public:
 
 	void InteractWithNPC();
 
+	
+	float MaxWalkSpeed{ 0.f };
 
+	float MaxRunSpeed{ 1000.f };
 	
 	
 protected:
@@ -38,6 +41,11 @@ private:
 	//Input functions
 	void WalkForward(float Value);
 	void WalkRight(float Value);
+
+	void StartRun();
+	void StopRun();
+
+
 	//FVector InitialRotation;
 
 	//Setting up camera

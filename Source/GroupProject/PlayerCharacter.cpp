@@ -5,6 +5,7 @@
 #include "NPC1.h"
 #include "Camera/CameraComponent.h"
 #include "Camera/CameraActor.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
 // Sets default values
@@ -18,6 +19,7 @@ APlayerCharacter::APlayerCharacter()
 	SpringArm->SetupAttachment(RootComponent);
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera comp"));
 	Camera->SetupAttachment(SpringArm);
+	
 }
 
 // Called when the game starts or when spawned
@@ -25,6 +27,10 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	//const FVector InitialRotation = GetActorForwardVector();
+
+	//Setting character speed
+	MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	MaxRunSpeed = GetCharacterMovement()->MaxCustomMovementSpeed;
 }
 
 void APlayerCharacter::WalkForward(float Value)
@@ -63,6 +69,16 @@ void APlayerCharacter::WalkRight(float Value)
 	
 }
 
+void APlayerCharacter::StartRun()
+{
+	GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
+}
+
+void APlayerCharacter::StopRun()
+{
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+}
+
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
@@ -79,7 +95,15 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("WalkRight", this, &APlayerCharacter::WalkRight);
 	// Character function jump
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	//Interact with NPCs
 	PlayerInputComponent->BindAction("Interaction", IE_Pressed, this, &APlayerCharacter::InteractWithNPC);
+	//
+	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &APlayerCharacter::StartRun);
+	PlayerInputComponent->BindAction("Run", IE_Released, this, &APlayerCharacter::StopRun);
+	//Turning
+	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+
+	
 }
 
 void APlayerCharacter::InteractWithNPC()
