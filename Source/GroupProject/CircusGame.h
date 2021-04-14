@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+
 #include "CircusGame.generated.h"
 
 /**
@@ -14,4 +15,16 @@ class GROUPPROJECT_API ACircusGame : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+public:
+	// Sets default values for this character's properties
+	ACircusGame();
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+	void RestartingLevel();
+
+protected:
+	virtual void BeginPlay() override;
+
+
 };
