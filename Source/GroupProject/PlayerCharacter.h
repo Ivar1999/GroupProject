@@ -54,6 +54,5 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Settings")
 		UCameraComponent* Camera = nullptr;
 
-	UPROPERTY(EditAnywhere)
-		AActor* ResetActor;
+
 };
