@@ -30,9 +30,11 @@ public:
 	
 	float MaxWalkSpeed{ 0.f };
 
-	float MaxRunSpeed{ 1000.f };
+	float MaxRunSpeed{ 600.f };
 	
-	
+	float MaxCrouchSpeed{ 150.f };
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -45,6 +47,8 @@ private:
 	void StartRun();
 	void StopRun();
 
+	void StartCrouch();
+	void StopCrouch();
 
 	//FVector InitialRotation;
 
@@ -54,6 +58,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Settings")
 		UCameraComponent* Camera = nullptr;
 
-	UPROPERTY(EditAnywhere)
-		AActor* ResetActor;
+
+
 };

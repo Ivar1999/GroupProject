@@ -20,6 +20,12 @@ APlayerCharacter::APlayerCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera comp"));
 	Camera->SetupAttachment(SpringArm);
 	
+
+
+	GetCharacterMovement()->MaxCustomMovementSpeed = 600.f;
+
+	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
+	GetCharacterMovement()->CrouchedHalfHeight = 60.f;
 }
 
 // Called when the game starts or when spawned
@@ -31,6 +37,7 @@ void APlayerCharacter::BeginPlay()
 	//Setting character speed
 	MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	MaxRunSpeed = GetCharacterMovement()->MaxCustomMovementSpeed;
+	MaxCrouchSpeed = GetCharacterMovement()->MaxWalkSpeedCrouched;
 }
 
 void APlayerCharacter::WalkForward(float Value)
@@ -86,6 +93,21 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 }
 
+void APlayerCharacter::StartCrouch()
+{
+	Crouch();		//from CharacterMovement
+	GetCharacterMovement()->MaxWalkSpeed = MaxCrouchSpeed;
+	GetMesh()->SetRelativeScale3D(FVector(1.f, 1.f, 0.6f));		//before we have animations
+}
+
+void APlayerCharacter::StopCrouch()
+{
+	UnCrouch();		//from CharacterMovement
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+	GetMesh()->SetRelativeScale3D(FVector(1.f));				//before we have animations
+}
+
+
 // Called to bind functionality to input
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -102,10 +124,12 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Run", IE_Released, this, &APlayerCharacter::StopRun);
 	//Turning
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-
+	// crouching
+	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &APlayerCharacter::StartCrouch);	
+	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &APlayerCharacter::StopCrouch);
 	
 }
-
+	
 void APlayerCharacter::InteractWithNPC()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Interaction test"));

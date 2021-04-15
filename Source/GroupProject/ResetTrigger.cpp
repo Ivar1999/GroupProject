@@ -2,7 +2,6 @@
 
 
 #include "ResetTrigger.h"
-#include "Engine/BrushShape.h"
 #include "Kismet/GameplayStatics.h"
 AResetTrigger::AResetTrigger()
 {
