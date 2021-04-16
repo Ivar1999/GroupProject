@@ -44,5 +44,4 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Catogory = AI)
 		class UAISenseConfig_Sight* SightConfig;
 
-
 };
