@@ -22,9 +22,9 @@ AMyAIController::AMyAIController() {
 	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
 	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
 
-	/*GetPerceptionComponent()->SetDominantSense(*SightConfig->GetSenseImplementation());
+	GetPerceptionComponent()->SetDominantSense(*SightConfig->GetSenseImplementation());
 	GetPerceptionComponent()->OnPerceptionUpdated.AddDynamic(this, &AMyAIController::OnPawnDetected);
-	GetPerceptionComponent()->ConfigureSense(*SightConfig);*/
+	GetPerceptionComponent()->ConfigureSense(*SightConfig);
 }
 
 void AMyAIController::BeginPlay(){
