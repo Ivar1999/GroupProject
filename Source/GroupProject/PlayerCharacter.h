@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Components/SphereComponent.h"
+#include "RangeWeapon.h"
 #include "PlayerCharacter.generated.h"
 
 UCLASS()
@@ -25,6 +27,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Chat Settings")
 		int ChatBubbleIndex = 0;
 
+
 	void InteractWithNPC();
 
 	
@@ -34,6 +37,12 @@ public:
 	
 	float MaxCrouchSpeed{ 150.f };
 
+	//RangeWeapon
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+		TSubclassOf<class ARangeWeapon> RangedWeapon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		class ARangeWeapon* CharWeapon{ nullptr };
 
 protected:
 	// Called when the game starts or when spawned
@@ -58,6 +67,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Settings")
 		UCameraComponent* Camera = nullptr;
 
+	void Interact();
 
+	UPROPERTY(EditAnywhere, Category = "Pickup", meta = (AllowPrivateAccess = true))
+		USphereComponent* PickupRange;
+
+	
 
 };

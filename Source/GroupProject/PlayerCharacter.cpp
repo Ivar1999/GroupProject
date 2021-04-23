@@ -7,6 +7,10 @@
 #include "Camera/CameraActor.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Components/InputComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "RangeWeapon.h"
+
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -19,13 +23,17 @@ APlayerCharacter::APlayerCharacter()
 	SpringArm->SetupAttachment(RootComponent);
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera comp"));
 	Camera->SetupAttachment(SpringArm);
-	
 
 
 	GetCharacterMovement()->MaxCustomMovementSpeed = 600.f;
 
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	GetCharacterMovement()->CrouchedHalfHeight = 60.f;
+
+	PickupRange = CreateDefaultSubobject<USphereComponent>(TEXT("PickupRange"));
+	PickupRange->AttachTo(RootComponent);
+	PickupRange->SetSphereRadius(175.f);
+
 }
 
 // Called when the game starts or when spawned
@@ -38,6 +46,19 @@ void APlayerCharacter::BeginPlay()
 	MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	MaxRunSpeed = GetCharacterMovement()->MaxCustomMovementSpeed;
 	MaxCrouchSpeed = GetCharacterMovement()->MaxWalkSpeedCrouched;
+	
+	//FName WeaponSocket = TEXT("WeaponSocket");
+	
+
+	// Sets up a weapon on the character, and hides it when the game starts.
+	CharWeapon = GetWorld()->SpawnActor<ARangeWeapon>(RangedWeapon);
+	if (CharWeapon)
+	{
+	CharWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
+	CharWeapon->SetActorHiddenInGame(true);
+	}
+	
+	
 }
 
 void APlayerCharacter::WalkForward(float Value)
@@ -128,8 +149,38 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &APlayerCharacter::StartCrouch);	
 	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &APlayerCharacter::StopCrouch);
 	
+	PlayerInputComponent->BindAction("Pickup", IE_Pressed, this, &APlayerCharacter::Interact);
 }
 	
+void APlayerCharacter::Interact()
+{
+	TArray<AActor*> ActorsInRange;
+
+	PickupRange->GetOverlappingActors(ActorsInRange);
+	//UINT8 Items = ActorsInRange.Num();
+	UE_LOG(LogTemp, Warning, TEXT("x pressed actors in range:  %d"), ActorsInRange.Num());
+
+	for (int i = 0; i < ActorsInRange.Num(); i++)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Interaction test"));
+		
+		if (ActorsInRange[i]->IsA(ARangeWeapon::StaticClass()))
+		{
+			ARangeWeapon* ItemCheck = Cast<ARangeWeapon>(ActorsInRange[i]);
+			if (ItemCheck && ItemCheck->GetActive())
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Interaction test2"));
+				ItemCheck->Interacted();
+
+				if (CharWeapon)
+				{
+					CharWeapon->SetActorHiddenInGame(false);
+				}
+			}
+		}
+	}
+}
+
 void APlayerCharacter::InteractWithNPC()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Interaction test"));
