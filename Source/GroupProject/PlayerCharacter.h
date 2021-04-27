@@ -27,10 +27,40 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Chat Settings")
 		int ChatBubbleIndex = 0;
 
+	//Arm+Straw mesh
+	UPROPERTY(VisibleAnywhere)
+		UStaticMeshComponent* ShooterMesh;
 
+	void GameSwap();
+
+	void Turn(float value);
+	void LookUp(float value);
+
+	bool BalloonInteract{ false };
+
+	bool EnableShooter{ false };
+
+	UPROPERTY(EditAnywhere, Category = "Settings")
+		USceneComponent* AmmoSpawnPoint;
+	UPROPERTY(EditAnywhere, Category = "Ammo")
+		TSubclassOf<class AAmmo> AmmoClass;
+
+	void Shoot();
+
+
+	FRotator InitialRotation;
 	void InteractWithNPC();
+	float TopdownArm;
+	FVector TopdownLocation;
+	FVector FPLocation;
 
-	
+
+	float FPArm;
+	FRotator TopdownRotation;
+	FRotator FPRotation;
+
+
+
 	float MaxWalkSpeed{ 0.f };
 
 	float MaxRunSpeed{ 600.f };

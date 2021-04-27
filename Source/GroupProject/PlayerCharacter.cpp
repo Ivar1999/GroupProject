@@ -10,7 +10,8 @@
 #include "Components/InputComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "RangeWeapon.h"
-
+#include "BalloonGame.h"
+#include "Ammo.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -23,6 +24,30 @@ APlayerCharacter::APlayerCharacter()
 	SpringArm->SetupAttachment(RootComponent);
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera comp"));
 	Camera->SetupAttachment(SpringArm);
+	SpringArm->bInheritYaw = false;
+	SpringArm->bInheritPitch = true;
+
+	InitialRotation = GetControlRotation();
+
+	TopdownArm = 700.f;
+	FPArm = -50.f;
+	TopdownLocation = FVector(0.f, 0.f, 0.f);
+	TopdownRotation = FRotator(-50, 0.f, 0.f);
+	FPLocation = FVector(0.f, 0.f, 50.f);
+	FPRotation = FRotator(0.f, 0.f, 0.f);
+
+	SpringArm->TargetArmLength = TopdownArm;
+	SpringArm->SetRelativeLocation(TopdownLocation);
+	SpringArm->SetRelativeRotation(TopdownRotation);
+	
+	bUseControllerRotationYaw = true;
+	bUseControllerRotationPitch = false;
+	
+
+
+	ShooterMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
+	ShooterMesh->SetupAttachment(RootComponent);
+	ShooterMesh->SetHiddenInGame(true);
 
 
 	GetCharacterMovement()->MaxCustomMovementSpeed = 600.f;
@@ -31,9 +56,12 @@ APlayerCharacter::APlayerCharacter()
 	GetCharacterMovement()->CrouchedHalfHeight = 60.f;
 
 	PickupRange = CreateDefaultSubobject<USphereComponent>(TEXT("PickupRange"));
-	PickupRange->AttachTo(RootComponent);
+	PickupRange->SetupAttachment(RootComponent);
 	PickupRange->SetSphereRadius(175.f);
 
+
+	AmmoSpawnPoint = CreateDefaultSubobject<USceneComponent>(TEXT("Ammo spawn point comp"));
+	AmmoSpawnPoint->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
@@ -60,6 +88,7 @@ void APlayerCharacter::BeginPlay()
 	
 	
 }
+
 
 void APlayerCharacter::WalkForward(float Value)
 {
@@ -144,14 +173,21 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &APlayerCharacter::StartRun);
 	PlayerInputComponent->BindAction("Run", IE_Released, this, &APlayerCharacter::StopRun);
 	//Turning
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("Turn", this, &APlayerCharacter::Turn);
+	PlayerInputComponent->BindAxis("LookUp", this, &APlayerCharacter::LookUp);
 	// crouching
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &APlayerCharacter::StartCrouch);	
 	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &APlayerCharacter::StopCrouch);
 	
 	PlayerInputComponent->BindAction("Pickup", IE_Pressed, this, &APlayerCharacter::Interact);
+
+	PlayerInputComponent->BindAction("Shoot", IE_Pressed, this, &APlayerCharacter::Shoot);
+
+
 }
 	
+//void 
+
 void APlayerCharacter::Interact()
 {
 	TArray<AActor*> ActorsInRange;
@@ -178,8 +214,100 @@ void APlayerCharacter::Interact()
 				}
 			}
 		}
+		if (ActorsInRange[i]->IsA(ABalloonGame::StaticClass()))
+		{
+			if (BalloonInteract)
+			{
+				BalloonInteract = false;
+			
+			}
+			else if(!BalloonInteract)
+			{
+				BalloonInteract = true;
+			}
+			GameSwap();
+		}
 	}
 }
+
+void APlayerCharacter::GameSwap()
+{
+	if (BalloonInteract)
+	{
+		InitialRotation = GetActorRotation();
+		//GetControlRotation()
+		SpringArm->TargetArmLength = FPArm;
+		SpringArm->SetRelativeLocation(FPLocation);
+		SpringArm->SetRelativeRotation(FPRotation);
+		SpringArm->bInheritYaw = true;
+		SpringArm->bInheritPitch = true;
+		ShooterMesh->SetHiddenInGame(false);
+		GetMesh()->SetHiddenInGame(true);
+		EnableShooter = true;
+		bUseControllerRotationPitch = true;
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+	}
+	else if (!BalloonInteract)
+	{
+
+		SetActorRotation(InitialRotation);
+		SpringArm->TargetArmLength = TopdownArm;
+		SpringArm->SetRelativeLocation(TopdownLocation);
+		SpringArm->SetRelativeRotation(TopdownRotation);
+		SpringArm->bInheritYaw = false;
+		SpringArm->bInheritPitch = false;
+		GetMesh()->SetHiddenInGame(false);
+		ShooterMesh->SetHiddenInGame(true);
+		EnableShooter = false;
+		bUseControllerRotationPitch = false;
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+		//GetMesh()->SetRelativeRotation(InitialRotation);
+
+
+	}
+
+}
+
+void APlayerCharacter::Turn(float value)
+{
+	if (!EnableShooter)
+	{
+		AddControllerYawInput(value);
+	}
+	else if (EnableShooter)
+	{
+		//limited yaw
+		// if controlrotation.yaw > 45 -> setcontrol.yaw 45
+		// if control.yaw < -45 -> set.yaw -45
+		AddControllerYawInput(value);
+		if (GetControlRotation().Yaw < 315.f && GetControlRotation().Yaw > 200.f)
+		{
+			GetController()->SetControlRotation(FRotator(GetControlRotation().Pitch, 315.f, GetControlRotation().Roll));
+		}
+		if(GetControlRotation().Yaw > 45.f && GetControlRotation().Yaw < 100.f)
+		{
+			GetController()->SetControlRotation(FRotator(GetControlRotation().Pitch, 45.f, GetControlRotation().Roll));
+		}
+
+	}
+}
+
+void APlayerCharacter::LookUp(float value)
+{
+	if (EnableShooter)
+	{
+		AddControllerPitchInput(value);
+		if (GetControlRotation().Pitch < 340.f && GetControlRotation().Pitch > 200.f)
+		{
+			GetController()->SetControlRotation(FRotator( 340.f, GetControlRotation().Yaw, GetControlRotation().Roll));
+		}
+		if (GetControlRotation().Pitch > 30.f && GetControlRotation().Pitch < 100.f)
+		{
+			GetController()->SetControlRotation(FRotator(30.f, GetControlRotation().Yaw, GetControlRotation().Roll));
+		}
+	}
+}
+
 
 void APlayerCharacter::InteractWithNPC()
 {
@@ -207,5 +335,18 @@ void APlayerCharacter::InteractWithNPC()
 		}
 	}
 
+
+}
+
+void APlayerCharacter::Shoot()
+{
+
+	FActorSpawnParameters Param;
+	Param.Name = "Ammo";
+	Param.Instigator = this;
+	Param.Owner = this;
+	FVector const SpawnLocation = AmmoSpawnPoint->GetComponentLocation();
+	FRotator const AmmoRotation = GetActorForwardVector().Rotation();
+	const auto Ammo = GetWorld()->SpawnActor<AAmmo>(AmmoClass, SpawnLocation, AmmoRotation);
 
 }
