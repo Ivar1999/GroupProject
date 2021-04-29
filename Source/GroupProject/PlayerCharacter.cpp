@@ -280,11 +280,11 @@ void APlayerCharacter::Turn(float value)
 		// if controlrotation.yaw > 45 -> setcontrol.yaw 45
 		// if control.yaw < -45 -> set.yaw -45
 		AddControllerYawInput(value);
-		if (GetControlRotation().Yaw < 315.f && GetControlRotation().Yaw > 200.f)
+		if (GetControlRotation().Yaw < 315.f && GetControlRotation().Yaw > 155.f)
 		{
 			GetController()->SetControlRotation(FRotator(GetControlRotation().Pitch, 315.f, GetControlRotation().Roll));
 		}
-		if(GetControlRotation().Yaw > 45.f && GetControlRotation().Yaw < 100.f)
+		if(GetControlRotation().Yaw > 45.f && GetControlRotation().Yaw < 150.f)
 		{
 			GetController()->SetControlRotation(FRotator(GetControlRotation().Pitch, 45.f, GetControlRotation().Roll));
 		}
