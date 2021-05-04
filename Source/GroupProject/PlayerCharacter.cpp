@@ -211,6 +211,7 @@ void APlayerCharacter::Interact()
 				if (CharWeapon)
 				{
 					CharWeapon->SetActorHiddenInGame(false);
+					CanShoot = true;
 				}
 			}
 		}
@@ -340,7 +341,8 @@ void APlayerCharacter::InteractWithNPC()
 
 void APlayerCharacter::Shoot()
 {
-
+	if (CanShoot)
+	{
 	FActorSpawnParameters Param;
 	Param.Name = "Ammo";
 	Param.Instigator = this;
@@ -348,5 +350,6 @@ void APlayerCharacter::Shoot()
 	FVector const SpawnLocation = AmmoSpawnPoint->GetComponentLocation();
 	FRotator const AmmoRotation = GetActorForwardVector().Rotation();
 	const auto Ammo = GetWorld()->SpawnActor<AAmmo>(AmmoClass, SpawnLocation, AmmoRotation);
+	}
 
 }

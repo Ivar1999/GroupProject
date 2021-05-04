@@ -39,6 +39,8 @@ public:
 	bool BalloonInteract{ false };
 
 	bool EnableShooter{ false };
+	bool CanShoot{ false };
+
 
 	UPROPERTY(EditAnywhere, Category = "Settings")
 		USceneComponent* AmmoSpawnPoint;
