@@ -27,6 +27,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Chat Settings")
 		int ChatBubbleIndex = 0;
 
+
 	//Arm+Straw mesh
 	UPROPERTY(VisibleAnywhere)
 		UStaticMeshComponent* ShooterMesh;
@@ -49,6 +50,7 @@ public:
 
 	void Shoot();
 
+	//int InstrumentCount = 0;
 
 	FRotator InitialRotation;
 	void InteractWithNPC();
@@ -61,13 +63,16 @@ public:
 	FRotator TopdownRotation;
 	FRotator FPRotation;
 
+	bool InBalance();
+	bool balancing;
 
+	float MaxWalkSpeed{ 150.f };
 
-	float MaxWalkSpeed{ 0.f };
-
-	float MaxRunSpeed{ 600.f };
+	float MaxRunSpeed{ 300.f };
 	
-	float MaxCrouchSpeed{ 150.f };
+	float MaxCrouchSpeed{ 50.f };
+
+	float MaxBalanceSpeed{ 140.f };
 
 	//RangeWeapon
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")

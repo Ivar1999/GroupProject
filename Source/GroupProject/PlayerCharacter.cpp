@@ -12,6 +12,7 @@
 #include "RangeWeapon.h"
 #include "BalloonGame.h"
 #include "Ammo.h"
+#include "Instrument.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -50,7 +51,7 @@ APlayerCharacter::APlayerCharacter()
 	ShooterMesh->SetHiddenInGame(true);
 
 
-	GetCharacterMovement()->MaxCustomMovementSpeed = 600.f;
+	GetCharacterMovement()->MaxCustomMovementSpeed = 300.f;
 
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	GetCharacterMovement()->CrouchedHalfHeight = 60.f;
@@ -76,7 +77,8 @@ void APlayerCharacter::BeginPlay()
 	MaxCrouchSpeed = GetCharacterMovement()->MaxWalkSpeedCrouched;
 	
 	//FName WeaponSocket = TEXT("WeaponSocket");
-	
+
+	balancing = false;
 
 	// Sets up a weapon on the character, and hides it when the game starts.
 	CharWeapon = GetWorld()->SpawnActor<ARangeWeapon>(RangedWeapon);
@@ -92,6 +94,7 @@ void APlayerCharacter::BeginPlay()
 
 void APlayerCharacter::WalkForward(float Value)
 {
+
 	const FVector Direction = GetActorForwardVector();
 
 	AddMovementInput(Direction, Value);
@@ -128,12 +131,19 @@ void APlayerCharacter::WalkRight(float Value)
 
 void APlayerCharacter::StartRun()
 {
-	GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
+	if (!InBalance())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
+	}
+	
 }
 
 void APlayerCharacter::StopRun()
 {
-	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+	if (!InBalance())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+	}
 }
 
 // Called every frame
@@ -147,14 +157,14 @@ void APlayerCharacter::StartCrouch()
 {
 	Crouch();		//from CharacterMovement
 	GetCharacterMovement()->MaxWalkSpeed = MaxCrouchSpeed;
-	GetMesh()->SetRelativeScale3D(FVector(1.f, 1.f, 0.6f));		//before we have animations
+	//GetMesh()->SetRelativeScale3D(FVector(1.f, 1.f, 0.6f));		//before we have animations
 }
 
 void APlayerCharacter::StopCrouch()
 {
 	UnCrouch();		//from CharacterMovement
 	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
-	GetMesh()->SetRelativeScale3D(FVector(1.f));				//before we have animations
+	//GetMesh()->SetRelativeScale3D(FVector(1.f));				//before we have animations
 }
 
 
@@ -186,7 +196,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 }
 	
-//void 
+bool APlayerCharacter::InBalance()
+{
+	return balancing;
+}
 
 void APlayerCharacter::Interact()
 {
@@ -203,7 +216,7 @@ void APlayerCharacter::Interact()
 		if (ActorsInRange[i]->IsA(ARangeWeapon::StaticClass()))
 		{
 			ARangeWeapon* ItemCheck = Cast<ARangeWeapon>(ActorsInRange[i]);
-			if (ItemCheck && ItemCheck->GetActive())
+			if (ItemCheck && ItemCheck->GetActive() && ItemCheck != CharWeapon)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Interaction test2"));
 				ItemCheck->Interacted();
@@ -214,6 +227,19 @@ void APlayerCharacter::Interact()
 					CanShoot = true;
 				}
 			}
+		}
+		if (ActorsInRange[i]->IsA(AInstrument::StaticClass()))
+		{
+			AInstrument* Instruments = Cast<AInstrument>(ActorsInRange[i]);
+			if (Instruments && Instruments->InstrumentGetActive())
+			{
+				Instruments->InstrumentInteracted();
+				UE_LOG(LogTemp, Warning, TEXT("Interaction with instrument"));
+				//InstrumentCount++;
+
+			}
+
+
 		}
 		if (ActorsInRange[i]->IsA(ABalloonGame::StaticClass()))
 		{
@@ -228,6 +254,7 @@ void APlayerCharacter::Interact()
 			}
 			GameSwap();
 		}
+		
 	}
 }
 

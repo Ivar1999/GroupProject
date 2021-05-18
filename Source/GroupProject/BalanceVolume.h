@@ -17,6 +17,10 @@ class GROUPPROJECT_API ABalanceVolume : public ATriggerVolume
 public:
 	ABalanceVolume();
 
+	float MaxWalkSpeed = 150.f;
+	float MaxBalanceSpeed = 125.f;
+	float MaxRunSpeed = 300.f;
+
 protected:
 	virtual void BeginPlay() override;
 
