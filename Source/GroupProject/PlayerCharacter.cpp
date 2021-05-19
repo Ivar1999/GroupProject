@@ -9,15 +9,17 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "RangeWeapon.h"
 #include "BalloonGame.h"
 #include "Ammo.h"
 #include "Instrument.h"
+#include "Ball.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Camera setup
@@ -40,10 +42,10 @@ APlayerCharacter::APlayerCharacter()
 	SpringArm->TargetArmLength = TopdownArm;
 	SpringArm->SetRelativeLocation(TopdownLocation);
 	SpringArm->SetRelativeRotation(TopdownRotation);
-	
+
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
-	
+
 
 
 	ShooterMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
@@ -63,6 +65,8 @@ APlayerCharacter::APlayerCharacter()
 
 	AmmoSpawnPoint = CreateDefaultSubobject<USceneComponent>(TEXT("Ammo spawn point comp"));
 	AmmoSpawnPoint->SetupAttachment(RootComponent);
+
+	ballPickedup = false;
 }
 
 // Called when the game starts or when spawned
@@ -75,7 +79,7 @@ void APlayerCharacter::BeginPlay()
 	MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	MaxRunSpeed = GetCharacterMovement()->MaxCustomMovementSpeed;
 	MaxCrouchSpeed = GetCharacterMovement()->MaxWalkSpeedCrouched;
-	
+
 	//FName WeaponSocket = TEXT("WeaponSocket");
 
 	balancing = false;
@@ -84,11 +88,11 @@ void APlayerCharacter::BeginPlay()
 	CharWeapon = GetWorld()->SpawnActor<ARangeWeapon>(RangedWeapon);
 	if (CharWeapon)
 	{
-	CharWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
-	CharWeapon->SetActorHiddenInGame(true);
+		CharWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
+		CharWeapon->SetActorHiddenInGame(true);
 	}
-	
-	
+
+
 }
 
 
@@ -98,7 +102,7 @@ void APlayerCharacter::WalkForward(float Value)
 	const FVector Direction = GetActorForwardVector();
 
 	AddMovementInput(Direction, Value);
-	
+
 	//if ((Controller != nullptr) && (Value != 0.0f))
 	//{
 	//	// find out which way is forward
@@ -114,7 +118,7 @@ void APlayerCharacter::WalkForward(float Value)
 void APlayerCharacter::WalkRight(float Value)
 {
 	const FVector Direction = GetActorRightVector();
-	
+
 	AddMovementInput(Direction, Value);
 	//if ((Controller != nullptr) && (Value != 0.0f))
 	//{
@@ -126,7 +130,7 @@ void APlayerCharacter::WalkRight(float Value)
 	//	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 	//	AddMovementInput(Direction, Value);
 	//}
-	
+
 }
 
 void APlayerCharacter::StartRun()
@@ -135,7 +139,7 @@ void APlayerCharacter::StartRun()
 	{
 		GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
 	}
-	
+
 }
 
 void APlayerCharacter::StopRun()
@@ -151,6 +155,18 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	UE_LOG(LogTemp, Warning, TEXT("Ballcounter: %i"), BalloonCounter);
+	if (BalloonCounter >= 7)
+	{
+		TArray<AActor*> BallActors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABall::StaticClass(), BallActors);
+
+		for (size_t i = 0; i < BallActors.Num(); i++)
+		{
+			ABall* Ball = Cast<ABall>(BallActors[i]);
+			Ball->BallHidden();
+		}
+	}
 }
 
 void APlayerCharacter::StartCrouch()
@@ -186,16 +202,16 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("Turn", this, &APlayerCharacter::Turn);
 	PlayerInputComponent->BindAxis("LookUp", this, &APlayerCharacter::LookUp);
 	// crouching
-	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &APlayerCharacter::StartCrouch);	
+	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &APlayerCharacter::StartCrouch);
 	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &APlayerCharacter::StopCrouch);
-	
+
 	PlayerInputComponent->BindAction("Pickup", IE_Pressed, this, &APlayerCharacter::Interact);
 
 	PlayerInputComponent->BindAction("Shoot", IE_Pressed, this, &APlayerCharacter::Shoot);
 
 
 }
-	
+
 bool APlayerCharacter::InBalance()
 {
 	return balancing;
@@ -212,7 +228,7 @@ void APlayerCharacter::Interact()
 	for (int i = 0; i < ActorsInRange.Num(); i++)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Interaction test"));
-		
+
 		if (ActorsInRange[i]->IsA(ARangeWeapon::StaticClass()))
 		{
 			ARangeWeapon* ItemCheck = Cast<ARangeWeapon>(ActorsInRange[i]);
@@ -241,20 +257,33 @@ void APlayerCharacter::Interact()
 
 
 		}
+		if (ActorsInRange[i]->IsA(ABall::StaticClass()))
+		{
+			ABall* Ball = Cast<ABall>(ActorsInRange[i]);
+			if (Ball && Ball->BallGetActive())
+			{
+				Ball->BallInteracted();
+				UE_LOG(LogTemp, Warning, TEXT("Interaction with ball"));
+				ballPickedup = true;
+
+			}
+
+
+		}
 		if (ActorsInRange[i]->IsA(ABalloonGame::StaticClass()))
 		{
 			if (BalloonInteract)
 			{
 				BalloonInteract = false;
-			
+
 			}
-			else if(!BalloonInteract)
+			else if (!BalloonInteract)
 			{
 				BalloonInteract = true;
 			}
 			GameSwap();
 		}
-		
+
 	}
 }
 
@@ -312,7 +341,7 @@ void APlayerCharacter::Turn(float value)
 		{
 			GetController()->SetControlRotation(FRotator(GetControlRotation().Pitch, 315.f, GetControlRotation().Roll));
 		}
-		if(GetControlRotation().Yaw > 45.f && GetControlRotation().Yaw < 150.f)
+		if (GetControlRotation().Yaw > 45.f && GetControlRotation().Yaw < 150.f)
 		{
 			GetController()->SetControlRotation(FRotator(GetControlRotation().Pitch, 45.f, GetControlRotation().Roll));
 		}
@@ -327,7 +356,7 @@ void APlayerCharacter::LookUp(float value)
 		AddControllerPitchInput(value);
 		if (GetControlRotation().Pitch < 340.f && GetControlRotation().Pitch > 200.f)
 		{
-			GetController()->SetControlRotation(FRotator( 340.f, GetControlRotation().Yaw, GetControlRotation().Roll));
+			GetController()->SetControlRotation(FRotator(340.f, GetControlRotation().Yaw, GetControlRotation().Roll));
 		}
 		if (GetControlRotation().Pitch > 30.f && GetControlRotation().Pitch < 100.f)
 		{
@@ -346,13 +375,28 @@ void APlayerCharacter::InteractWithNPC()
 	UINT8 Len = Result.Num();
 	for (size_t i = 0; i < Len; i++)
 	{
-		if (Result[i]->IsA(ANPC1::StaticClass()))
+		if (Result[i]->IsA(ANPC1::StaticClass()) && !ballPickedup)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Found interaction, %i"), ChatBubbleIndex);
-			if (Cast <ANPC1>(Result[i])->ChatBubbleIndex >= 10)
+			if (Cast <ANPC1>(Result[i])->ChatBubbleIndex >= 11)
 			{
 				ChatBubbleIndex = 0;
 				Cast <ANPC1>(Result[i])->ChatBubbleIndex = 0;
+				UE_LOG(LogTemp, Warning, TEXT("reset val, %i"), ChatBubbleIndex);
+			}
+			else
+			{
+				ChatBubbleIndex = Cast <ANPC1>(Result[i])->ChatBubbleIndex++;
+				UE_LOG(LogTemp, Warning, TEXT("++, %i"), ChatBubbleIndex);
+			}
+		}
+		else if (Result[i]->IsA(ANPC1::StaticClass()) && ballPickedup)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("BALL PICKED UP NEW INTERACTION"));
+			if (Cast <ANPC1>(Result[i])->ChatBubbleIndex >= 13)
+			{
+				ChatBubbleIndex = 11;
+				Cast <ANPC1>(Result[i])->ChatBubbleIndex = 11;
 				UE_LOG(LogTemp, Warning, TEXT("reset val, %i"), ChatBubbleIndex);
 			}
 			else
@@ -370,13 +414,13 @@ void APlayerCharacter::Shoot()
 {
 	if (CanShoot)
 	{
-	FActorSpawnParameters Param;
-	Param.Name = "Ammo";
-	Param.Instigator = this;
-	Param.Owner = this;
-	FVector const SpawnLocation = AmmoSpawnPoint->GetComponentLocation();
-	FRotator const AmmoRotation = GetActorForwardVector().Rotation();
-	const auto Ammo = GetWorld()->SpawnActor<AAmmo>(AmmoClass, SpawnLocation, AmmoRotation);
+		FActorSpawnParameters Param;
+		Param.Name = "Ammo";
+		Param.Instigator = this;
+		Param.Owner = this;
+		FVector const SpawnLocation = AmmoSpawnPoint->GetComponentLocation();
+		FRotator const AmmoRotation = GetActorForwardVector().Rotation();
+		const auto Ammo = GetWorld()->SpawnActor<AAmmo>(AmmoClass, SpawnLocation, AmmoRotation);
 	}
 
 }

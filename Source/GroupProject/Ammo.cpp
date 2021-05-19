@@ -8,11 +8,12 @@
 #include "Components/SphereComponent.h"
 #include "Balloon.h"
 #include "BalloonGame.h"
+#include "PlayerCharacter.h"
 // Sets default values
 AAmmo::AAmmo()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+    // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+    PrimaryActorTick.bCanEverTick = true;
 
     AmmoCollider = CreateDefaultSubobject<USphereComponent>(TEXT("AmmoCollider"));
     RootComponent = AmmoCollider;
@@ -33,13 +34,13 @@ AAmmo::AAmmo()
 
 
 
-  
+
 }
 
 // Called when the game starts or when spawned
 void AAmmo::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
     AmmoCollider->OnComponentBeginOverlap.AddDynamic(this, &AAmmo::OnOverlapHit);
 
 }
@@ -68,20 +69,30 @@ void AAmmo::OnOverlapHit(
     UE_LOG(LogTemp, Warning, TEXT("OnHit Test ammo"));
 
 
-    
 
-   if (OtherActor != this && OtherActor)
-        {
+
+    if (OtherActor != this && OtherActor)
+    {
         if (OtherActor->IsA(ABalloon::StaticClass()))
+        {
+            ABalloon* balloon = Cast<ABalloon>(OtherActor);
+            balloon->OnHit();
+
+            APlayerController* playercontroller = GetWorld()->GetFirstPlayerController();
             {
-                ABalloon* balloon = Cast<ABalloon>(OtherActor);
-                balloon->OnHit();
-        
-                UE_LOG(LogTemp, Warning, TEXT("Found Class Test"));
-                //Destroy();
+
             }
+            if (playercontroller)
+            {
+                APlayerCharacter* player = Cast<APlayerCharacter>(playercontroller->GetCharacter());
+                player->BalloonCounter++;
+            }
+            UE_LOG(LogTemp, Warning, TEXT("Found Class Test"));
+            //Destroy();
+        }
         Destroy();
-   }
+
+    }
 
 }
 

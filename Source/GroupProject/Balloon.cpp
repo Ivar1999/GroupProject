@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
+#include "PlayerCharacter.h"
 
 // Sets default values
 ABalloon::ABalloon()
