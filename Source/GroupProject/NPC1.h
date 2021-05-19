@@ -7,21 +7,37 @@
 #include "NPC1.generated.h"
 
 UCLASS()
-class GROUPPROJECT_API ANPC1 : public AActor
+class GROUPPROJECT_API ANPC1 : public APawn
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	ANPC1();
-	
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UPROPERTY(VisibleAnywhere)
+		class USceneComponent* RootBase{ nullptr };
 	UPROPERTY(EditAnywhere, Category = "Settings")
-		class UStaticMeshComponent* StaticMesh;
+		class USkeletalMeshComponent* SkeletalMesh1;
 	UPROPERTY(EditAnywhere, Category = "Settings")
 		class UCapsuleComponent* CollisionComp;
+	UPROPERTY(EditAnywhere, Category = "Settings")
+		class USkeletalMeshComponent* HappyHerb;
+	UPROPERTY(EditAnywhere, Category = "Settings")
+		class USkeletalMeshComponent* HappyHerbBall;
+	UPROPERTY(EditAnywhere, Category = "Settings")
+		class USkeletalMeshComponent* HerbTrick;
+	UPROPERTY(EditAnywhere, Category = "Settings")
+		class USkeletalMeshComponent* HerbTrickBall;
+
+
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation Settings")
+		bool onOverlap = false;
 
 	UFUNCTION()
 		void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -36,13 +52,13 @@ public:
 		bool IsTextVisible = false;
 
 	class UWidgetComponent* ChatWidget = nullptr;
-	
-	
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 private:
-	
+
 
 };

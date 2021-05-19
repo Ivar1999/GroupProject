@@ -25,8 +25,10 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Chat Settings")
-		int ChatBubbleIndex = 0;
+	int ChatBubbleIndex = 0;
 
+	int BalloonCounter = 0;
+	bool ballPickedup;
 
 	//Arm+Straw mesh
 	UPROPERTY(VisibleAnywhere)
