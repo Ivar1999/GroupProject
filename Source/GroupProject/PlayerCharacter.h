@@ -26,9 +26,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Chat Settings")
 	int ChatBubbleIndex = 0;
+	int ChatBubbleIndexClown = 0;
 
 	int BalloonCounter = 0;
 	bool ballPickedup;
+	int instrumentsPicked = 0;
+	bool instrumentsPickedup;
 
 	//Arm+Straw mesh
 	UPROPERTY(VisibleAnywhere)

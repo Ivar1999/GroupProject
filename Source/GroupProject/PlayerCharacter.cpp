@@ -15,6 +15,7 @@
 #include "Ammo.h"
 #include "Instrument.h"
 #include "Ball.h"
+#include "NPC2.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -67,6 +68,7 @@ APlayerCharacter::APlayerCharacter()
 	AmmoSpawnPoint->SetupAttachment(RootComponent);
 
 	ballPickedup = false;
+	instrumentsPickedup = false;
 }
 
 // Called when the game starts or when spawned
@@ -251,8 +253,11 @@ void APlayerCharacter::Interact()
 			{
 				Instruments->InstrumentInteracted();
 				UE_LOG(LogTemp, Warning, TEXT("Interaction with instrument"));
-				//InstrumentCount++;
-
+				instrumentsPicked++;
+				if (instrumentsPicked >= 3)
+				{
+					instrumentsPickedup = true;
+				}
 			}
 
 
@@ -370,8 +375,8 @@ void APlayerCharacter::InteractWithNPC()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Interaction test"));
 	TArray<AActor*> Result;
-
-	GetOverlappingActors(Result, ANPC1::StaticClass());
+	// NPC 1
+	GetOverlappingActors(Result);
 	UINT8 Len = Result.Num();
 	for (size_t i = 0; i < Len; i++)
 	{
@@ -405,8 +410,29 @@ void APlayerCharacter::InteractWithNPC()
 				UE_LOG(LogTemp, Warning, TEXT("++, %i"), ChatBubbleIndex);
 			}
 		}
+
+		//NPC 2
+		if (Result[i]->IsA(ANPC2::StaticClass()) && !instrumentsPickedup)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Found interaction, %i"), ChatBubbleIndexClown);
+			if (Cast <ANPC2>(Result[i])->ChatBubbleIndexClown >= 8)
+			{
+				ChatBubbleIndexClown = 0;
+				Cast <ANPC2>(Result[i])->ChatBubbleIndexClown = 0;
+				UE_LOG(LogTemp, Warning, TEXT("reset val, %i"), ChatBubbleIndexClown);
+			}
+			else
+			{
+				ChatBubbleIndexClown = Cast <ANPC2>(Result[i])->ChatBubbleIndexClown++;
+				UE_LOG(LogTemp, Warning, TEXT("++, %i"), ChatBubbleIndexClown);
+			}
+		}
+		
+
 	}
 
+	
+		
 
 }
 
